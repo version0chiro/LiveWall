@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LiveWall Web Smoke Test</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #08111f;
+    }
+    body {
+      background:
+        radial-gradient(circle at 20% 30%, #37a9ff 0, transparent 35%),
+        radial-gradient(circle at 80% 70%, #8b5cf6 0, transparent 40%),
+        #08111f;
+      animation: drift 3s ease-in-out infinite alternate;
+    }
+    @keyframes drift {
+      from { filter: hue-rotate(0deg); transform: scale(1); }
+      to { filter: hue-rotate(35deg); transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    window.wallpaperPropertyListener = {
+      applyUserProperties(properties) {
+        document.body.dataset.propertyCount = Object.keys(properties || {}).length;
+      }
+    };
+  </script>
+</body>
+</html>
