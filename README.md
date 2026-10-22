@@ -5,6 +5,8 @@ Engine projects as your desktop background on every display, controlled from
 the menu bar. No daemon, no Dock icon, no subscription and no bundled assets.
 Free.
 
+Website: https://version0chiro.github.io/LiveWall/
+
 This is an original implementation inspired by apps like Wallper — it ships no
 third-party assets or code.
 

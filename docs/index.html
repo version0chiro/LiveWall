@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b12">
+    <meta
+      name="description"
+      content="LiveWall is a native macOS live wallpaper player for local videos and compatible Wallpaper Engine projects."
+    >
+    <meta property="og:title" content="LiveWall — Your desktop, alive.">
+    <meta
+      property="og:description"
+      content="Play local videos and compatible Wallpaper Engine projects on macOS—with widgets, interaction, properties, audio visualization, and privacy controls."
+    >
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://version0chiro.github.io/LiveWall/">
+    <meta
+      property="og:image"
+      content="https://version0chiro.github.io/LiveWall/social-preview.svg"
+    >
+    <meta name="twitter:card" content="summary_large_image">
+    <title>LiveWall — Native live wallpapers for macOS</title>
+    <link rel="canonical" href="https://version0chiro.github.io/LiveWall/">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="LiveWall home">
+        <span class="brand-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </span>
+        <span>LiveWall</span>
+      </a>
+
+      <nav aria-label="Primary navigation">
+        <a href="#features">Features</a>
+        <a href="#compatibility">Compatibility</a>
+        <a href="#privacy">Privacy</a>
+        <a
+          class="nav-github"
+          href="https://github.com/version0chiro/LiveWall"
+        >
+          GitHub
+          <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">
+            <span class="status-dot" aria-hidden="true"></span>
+            Native Swift · macOS 14+ · v0.5.0
+          </div>
+          <h1>Your desktop,<br><span>alive.</span></h1>
+          <p class="hero-lede">
+            Turn local videos and compatible Wallpaper Engine projects into a
+            living macOS desktop—with interactive widgets, audio response, and
+            controls that respect your icons and privacy.
+          </p>
+          <div class="hero-actions">
+            <a
+              class="button button-primary"
+              href="https://github.com/version0chiro/LiveWall"
+            >
+              View source on GitHub
+              <span aria-hidden="true">↗</span>
+            </a>
+            <a class="button button-secondary" href="#install">Build locally</a>
+          </div>
+          <p class="hero-note">
+            Free. No subscription. No bundled wallpapers. Your assets stay
+            yours.
+          </p>
+        </div>
+
+        <div class="hero-visual" aria-label="LiveWall desktop demonstration">
+          <div class="ambient ambient-one" aria-hidden="true"></div>
+          <div class="ambient ambient-two" aria-hidden="true"></div>
+
+          <div class="mac-frame">
+            <div class="mac-toolbar" aria-hidden="true">
+              <div class="traffic-lights"><i></i><i></i><i></i></div>
+              <span>LiveWall Desktop</span>
+              <div class="toolbar-status">
+                <i></i>
+                Active
+              </div>
+            </div>
+
+            <div class="demo-desktop" tabindex="0">
+              <div class="aurora" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="grid" aria-hidden="true"></div>
+              <div class="cursor-glow" aria-hidden="true"></div>
+
+              <div class="desktop-icons" aria-hidden="true">
+                <div><i class="folder-icon"></i><span>Projects</span></div>
+                <div><i class="file-icon"></i><span>Notes.txt</span></div>
+                <div><i class="drive-icon"></i><span>Macintosh</span></div>
+              </div>
+
+              <article class="clock-widget">
+                <div class="widget-kicker">
+                  <span>LOCAL TIME</span>
+                  <i></i>
+                </div>
+                <strong id="demo-time">10:09</strong>
+                <p id="demo-date">THURSDAY · OCT 22</p>
+                <div class="clock-rule"><span></span></div>
+                <small>LIVEWALL / WIDGET MODE</small>
+              </article>
+
+              <article class="system-widget">
+                <span>SYSTEM AUDIO</span>
+                <div class="equalizer" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                  <i></i><i></i><i></i><i></i>
+                </div>
+                <small>128 BAND SPECTRUM</small>
+              </article>
+
+              <div class="interaction-callout">
+                <kbd>⌥</kbd>
+                <span>Hold Option to interact</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-card mode-card" aria-hidden="true">
+            <i></i>
+            <span><strong>Widget Mode</strong>Desktop icons stay visible</span>
+          </div>
+          <div class="floating-card privacy-card" aria-hidden="true">
+            <span class="shield">◇</span>
+            <span><strong>Local first</strong>Network access is opt-in</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="signal-strip" aria-label="LiveWall highlights">
+        <div><strong>Native</strong><span>AppKit + WebKit</span></div>
+        <div><strong>Flexible</strong><span>Video + web projects</span></div>
+        <div><strong>Interactive</strong><span>Mouse, keyboard, widgets</span></div>
+        <div><strong>Private</strong><span>Per-wallpaper permissions</span></div>
+      </section>
+
+      <section class="section features" id="features">
+        <div class="section-heading">
+          <p class="section-label">BUILT FOR THE DESKTOP</p>
+          <h2>More than a looping video.</h2>
+          <p>
+            LiveWall provides the browser host features sophisticated web
+            wallpapers expect, while staying a small native menu-bar app.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card feature-wide">
+            <div class="feature-icon icon-layers" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div>
+              <p class="card-label">ICON-FRIENDLY</p>
+              <h3>Widgets without losing your desktop.</h3>
+              <p>
+                Widget Mode keeps Finder icons visible. Clocks, calendars, and
+                dashboards run beneath them; hold Option only when you need the
+                wallpaper’s controls.
+              </p>
+            </div>
+            <div class="mini-mode-demo" aria-hidden="true">
+              <div><i></i><span>Wallpaper</span></div>
+              <div><i></i><span>Desktop icons</span></div>
+              <div><i></i><span>Option interaction</span></div>
+            </div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon icon-sliders" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <p class="card-label">CUSTOMIZE</p>
+            <h3>Every property, in one native editor.</h3>
+            <p>
+              Change switches, sliders, colors, text, files, and presets live.
+              Settings are remembered separately for each wallpaper.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon icon-wave" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <p class="card-label">AUDIO + MEDIA</p>
+            <h3>Let the desktop hear what you hear.</h3>
+            <p>
+              Feed a 128-band system-audio spectrum to visualizers, plus
+              now-playing metadata from Music and Spotify.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon icon-network" aria-hidden="true">
+              <i></i><i></i><i></i><span></span>
+            </div>
+            <p class="card-label">CONTROLLED ACCESS</p>
+            <h3>Online only when you say so.</h3>
+            <p>
+              Remote requests are blocked by default. Grant internet access per
+              wallpaper when a trusted weather or data widget needs it.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon icon-display" aria-hidden="true">
+              <span></span><i></i>
+            </div>
+            <p class="card-label">NATIVE MACOS</p>
+            <h3>Small, quiet, and built for every Space.</h3>
+            <p>
+              One native wallpaper window per display, seamless video loops,
+              fullscreen pausing, and optional battery-aware playback.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section compatibility" id="compatibility">
+        <div class="section-heading split-heading">
+          <div>
+            <p class="section-label">COMPATIBILITY</p>
+            <h2>Bring the wallpapers you already own.</h2>
+          </div>
+          <p>
+            Paste an individual Steam Workshop link. LiveWall opens Valve’s
+            SteamCMD for authentication, then imports the downloaded project
+            from your local Steam library.
+          </p>
+        </div>
+
+        <div class="compatibility-panel">
+          <div class="compat-row">
+            <div class="compat-name">
+              <span class="compat-icon video-symbol">▶</span>
+              <span><strong>Video projects</strong>MP4, MOV, M4V, HEVC</span>
+            </div>
+            <span class="pill supported">Supported</span>
+          </div>
+          <div class="compat-row">
+            <div class="compat-name">
+              <span class="compat-icon web-symbol">&lt;/&gt;</span>
+              <span><strong>Web projects</strong>HTML, CSS, JavaScript, WebGL</span>
+            </div>
+            <span class="pill enhanced">Enhanced support</span>
+          </div>
+          <div class="compat-row">
+            <div class="compat-name">
+              <span class="compat-icon scene-symbol">◆</span>
+              <span><strong>Scene projects</strong>Wallpaper Engine scene.pkg</span>
+            </div>
+            <span class="pill unavailable">Not yet</span>
+          </div>
+          <div class="compat-row">
+            <div class="compat-name">
+              <span class="compat-icon app-symbol">▦</span>
+              <span><strong>Windows applications</strong>Executable wallpapers</span>
+            </div>
+            <span class="pill unavailable">Not on macOS</span>
+          </div>
+        </div>
+
+        <p class="legal-note">
+          LiveWall is not affiliated with Valve or Wallpaper Engine. Workshop
+          support is for content legitimately accessible through your own Steam
+          account. No assets are bundled, decrypted, or redistributed.
+        </p>
+      </section>
+
+      <section class="section privacy-section" id="privacy">
+        <div class="privacy-panel">
+          <div class="privacy-copy">
+            <p class="section-label">LOCAL BY DESIGN</p>
+            <h2>Your wallpaper does not need the keys to your Mac.</h2>
+            <p>
+              Web projects run in ephemeral WebKit storage with navigation
+              confined to their project folder. Local file properties become
+              data URLs, and sensitive capabilities remain visibly opt-in.
+            </p>
+          </div>
+          <div class="permission-list">
+            <div>
+              <span class="permission-state blocked">Blocked</span>
+              <p><strong>Remote network</strong>Default for every wallpaper</p>
+            </div>
+            <div>
+              <span class="permission-state ask">Ask</span>
+              <p><strong>System audio</strong>Only for visualizers</p>
+            </div>
+            <div>
+              <span class="permission-state ask">Ask</span>
+              <p><strong>Media automation</strong>Only for Music and Spotify</p>
+            </div>
+            <div>
+              <span class="permission-state local">Local</span>
+              <p><strong>Wallpaper properties</strong>Stored on your Mac</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section install" id="install">
+        <div class="install-card">
+          <div>
+            <p class="section-label">BUILD IT YOURSELF</p>
+            <h2>Three commands. One living desktop.</h2>
+            <p>
+              LiveWall is source-available and builds with the macOS Command
+              Line Tools. The generated app is ad-hoc signed for local use.
+            </p>
+          </div>
+          <div class="terminal">
+            <div class="terminal-bar">
+              <span><i></i><i></i><i></i></span>
+              <button id="copy-command" type="button">Copy</button>
+            </div>
+            <pre><code id="build-command">git clone https://github.com/version0chiro/LiveWall.git
+cd LiveWall
+./build.sh &amp;&amp; open LiveWall.app</code></pre>
+          </div>
+          <div class="install-actions">
+            <a
+              class="button button-primary"
+              href="https://github.com/version0chiro/LiveWall"
+            >
+              Get LiveWall on GitHub
+              <span aria-hidden="true">↗</span>
+            </a>
+            <span>Requires macOS 14 or later</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <a class="brand footer-brand" href="#">
+        <span class="brand-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </span>
+        <span>LiveWall</span>
+      </a>
+      <p>Made for desktops that deserve more than a still image.</p>
+      <div>
+        <a href="https://github.com/version0chiro/LiveWall">Source</a>
+        <a href="https://github.com/version0chiro/LiveWall/issues">Issues</a>
+        <span>© <span id="year">2026</span> version0chiro</span>
+      </div>
+    </footer>
+  </body>
+</html>
