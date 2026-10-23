@@ -15,6 +15,7 @@ swiftc \
   -sdk "$SDK" \
   -target "$TARGET" \
   -o "$TEST_DIR/WallpaperProjectLoaderTests" \
+  "$ROOT/Sources/LiveWall/Diagnostics.swift" \
   "$ROOT/Sources/LiveWall/WallpaperProject.swift" \
   "$ROOT/Sources/LiveWall/SceneWallpaper.swift" \
   "$ROOT/Sources/LiveWall/SteamWorkshop.swift" \

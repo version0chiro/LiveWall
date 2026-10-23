@@ -36,6 +36,17 @@ hdiutil create \
   -format UDZO \
   "$DMG_PATH"
 
+if [ -n "${LIVEWALL_NOTARY_PROFILE:-}" ]; then
+  xcrun notarytool submit \
+    "$DMG_PATH" \
+    --keychain-profile "$LIVEWALL_NOTARY_PROFILE" \
+    --wait
+  xcrun stapler staple "$DMG_PATH"
+  xcrun stapler validate "$DMG_PATH"
+else
+  echo "note: LIVEWALL_NOTARY_PROFILE is unset; DMG will not be notarized"
+fi
+
 hdiutil verify "$DMG_PATH"
 shasum -a 256 "$DMG_PATH" > "$CHECKSUM_PATH"
 

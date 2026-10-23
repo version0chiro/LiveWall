@@ -7,6 +7,11 @@ if CommandLine.arguments.count == 2,
 } else if CommandLine.arguments.count == 2,
           CommandLine.arguments[1] == "--smoke-test-audio-analyzer" {
     exit(SmokeTestRunner.runAudioAnalyzer())
+} else if CommandLine.arguments.count == 3,
+          CommandLine.arguments[1] == "--smoke-test-diagnostics" {
+    exit(SmokeTestRunner.runDiagnostics(
+        outputPath: CommandLine.arguments[2]
+    ))
 } else if CommandLine.arguments.count == 4,
    CommandLine.arguments[1] == "--smoke-test-workshop-link" {
     exit(SmokeTestRunner.runWorkshopLink(

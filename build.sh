@@ -6,7 +6,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP="$ROOT/LiveWall.app"
 SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk"
-TARGET="arm64-apple-macosx14.0"
+ARCHITECTURES="${LIVEWALL_ARCHITECTURES:-arm64 x86_64}"
+SIGN_IDENTITY="${LIVEWALL_SIGN_IDENTITY:--}"
+BUILD_DIR="$(mktemp -d "${TMPDIR:-/tmp}/livewall-build.XXXXXX")"
+
+cleanup() {
+  rm -rf "$BUILD_DIR"
+}
+trap cleanup EXIT
 
 # Fall back to the default SDK if the pinned one is gone.
 if [ ! -d "$SDK" ]; then
@@ -15,28 +22,45 @@ if [ ! -d "$SDK" ]; then
 fi
 
 echo "Building with SDK: $SDK"
+echo "Architectures: $ARCHITECTURES"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 mkdir -p "$APP/Contents/Resources"
 
-swiftc \
-  -sdk "$SDK" \
-  -target "$TARGET" \
-  -O \
-  -o "$APP/Contents/MacOS/LiveWall" \
-  "$ROOT"/Sources/LiveWall/*.swift \
-  -framework AppKit \
-  -framework AVFoundation \
-  -framework WebKit \
-  -framework ScreenCaptureKit \
-  -framework Accelerate \
-  -framework AudioToolbox \
-  -framework CoreMedia \
-  -framework CoreImage \
-  -framework ImageIO \
-  -framework Metal \
-  -framework MetalKit
+BINARIES=()
+for ARCH in $ARCHITECTURES; do
+  case "$ARCH" in
+    arm64|x86_64) ;;
+    *)
+      echo "error: unsupported architecture: $ARCH" >&2
+      exit 1
+      ;;
+  esac
+
+  BINARY="$BUILD_DIR/LiveWall-$ARCH"
+  swiftc \
+    -sdk "$SDK" \
+    -target "$ARCH-apple-macosx14.0" \
+    -O \
+    -o "$BINARY" \
+    "$ROOT"/Sources/LiveWall/*.swift \
+    -framework AppKit \
+    -framework AVFoundation \
+    -framework WebKit \
+    -framework ScreenCaptureKit \
+    -framework Accelerate \
+    -framework AudioToolbox \
+    -framework CoreMedia \
+    -framework CoreImage \
+    -framework ImageIO \
+    -framework Metal \
+    -framework MetalKit
+  BINARIES+=("$BINARY")
+done
+
+xcrun lipo -create "${BINARIES[@]}" -output "$APP/Contents/MacOS/LiveWall"
+cp "$ROOT/Assets/LiveWall.icns" "$APP/Contents/Resources/LiveWall.icns"
 
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -46,9 +70,10 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleName</key>            <string>LiveWall</string>
     <key>CFBundleDisplayName</key>     <string>LiveWall</string>
     <key>CFBundleIdentifier</key>      <string>com.livewall.app</string>
-    <key>CFBundleVersion</key>         <string>4</string>
-    <key>CFBundleShortVersionString</key><string>0.6.0</string>
+    <key>CFBundleVersion</key>         <string>5</string>
+    <key>CFBundleShortVersionString</key><string>0.6.1</string>
     <key>CFBundleExecutable</key>      <string>LiveWall</string>
+    <key>CFBundleIconFile</key>        <string>LiveWall.icns</string>
     <key>CFBundlePackageType</key>     <string>APPL</string>
     <key>LSMinimumSystemVersion</key>  <string>14.0</string>
     <key>LSUIElement</key>             <true/>
@@ -61,8 +86,18 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-# Ad-hoc codesign so macOS will launch it locally.
-codesign --force --deep --sign - "$APP" 2>/dev/null || echo "note: codesign skipped"
+if [ "$SIGN_IDENTITY" = "-" ]; then
+  codesign --force --deep --sign - "$APP"
+else
+  codesign \
+    --force \
+    --deep \
+    --options runtime \
+    --timestamp \
+    --sign "$SIGN_IDENTITY" \
+    "$APP"
+fi
 
 echo "Built: $APP"
+echo "Binary: $(xcrun lipo -archs "$APP/Contents/MacOS/LiveWall")"
 echo "Run:   open \"$APP\"   (look for the photo icon in the menu bar)"

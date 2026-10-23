@@ -1,0 +1,58 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run tests
+        run: ./test.sh
+      - name: Build universal app
+        run: ./build.sh
+      - name: Verify bundle
+        run: |
+          codesign --verify --deep --strict --verbose=2 LiveWall.app
+          test "$(lipo -archs LiveWall.app/Contents/MacOS/LiveWall)" = "x86_64 arm64" \
+            || test "$(lipo -archs LiveWall.app/Contents/MacOS/LiveWall)" = "arm64 x86_64"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: LiveWall-${{ github.sha }}
+          path: LiveWall.app
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build DMG
+        run: ./package.sh
+      - name: Verify tag matches app version
+        run: |
+          VERSION="$(/usr/libexec/PlistBuddy \
+            -c 'Print :CFBundleShortVersionString' \
+            LiveWall.app/Contents/Info.plist)"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/LiveWall-*.dmg \
+            dist/LiveWall-*.dmg.sha256 \
+            --generate-notes \
+            --title "LiveWall ${GITHUB_REF_NAME#v}"

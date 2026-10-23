@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let mediaIntegrationKey = "LiveWall.mediaIntegrationEnabled"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        LiveWallDiagnostics.log("Application launched")
         NSApp.setActivationPolicy(.accessory)
         loadPrefs()
         configureHostIntegrations()
@@ -236,6 +237,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
         menu.addItem(actionItem(
+            title: "Export Diagnostics…",
+            action: #selector(exportDiagnostics),
+            keyEquivalent: ""
+        ))
+        menu.addItem(actionItem(
             title: "Quit LiveWall",
             action: #selector(quit),
             keyEquivalent: "q"
@@ -415,6 +421,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func scanLibrary(at rootURL: URL, reportResult: Bool) {
         let scan = WallpaperProjectLoader.scan(rootURL: rootURL)
+        LiveWallDiagnostics.log(
+            """
+            Scanned library \(LiveWallDiagnostics.redactedPath(rootURL.path)): \
+            \(scan.supportedProjects.count) supported, \
+            \(scan.unsupportedProjects.count) unsupported, \
+            \(scan.issues.count) invalid
+            """
+        )
         libraryScan = scan
         UserDefaults.standard.set(rootURL.path, forKey: libraryRootKey)
         rebuildMenu()
@@ -472,6 +486,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             itemID: item.id,
             accountName: accountName
         )
+        LiveWallDiagnostics.log(
+            "Started Steam Workshop download for item \(item.id)"
+        )
         guard NSWorkspace.shared.open(job.scriptURL) else {
             workshopManager.cleanup(job: job)
             throw SteamWorkshopManagerError.couldNotPrepareDownload(
@@ -510,6 +527,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             let status = statusText?.trimmingCharacters(in: .whitespacesAndNewlines)
             stopMonitoringWorkshopDownload(job: job)
+            LiveWallDiagnostics.log(
+                "Steam Workshop download failed for item \(job.itemID)"
+            )
             showAlert(
                 title: "Steam Workshop Download Failed",
                 message: """
@@ -534,6 +554,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func finishWorkshopDownload(job: SteamWorkshopDownloadJob) {
         do {
             let project = try WallpaperProjectLoader.load(manifestURL: job.manifestURL)
+            LiveWallDiagnostics.log(
+                "Steam Workshop download completed for item \(job.itemID)"
+            )
             try importDownloadedWorkshopProject(project)
             stopMonitoringWorkshopDownload(job: job)
             if project.isSupported {
@@ -552,6 +575,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 )
             }
         } catch {
+            LiveWallDiagnostics.log(
+                """
+                Steam Workshop import failed for item \(job.itemID): \
+                \(error.localizedDescription)
+                """
+            )
             stopMonitoringWorkshopDownload(job: job)
             showAlert(
                 title: "Downloaded Project Could Not Be Imported",
@@ -582,6 +611,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setVideoWallpaper(_ url: URL) {
+        LiveWallDiagnostics.log(
+            "Selected video \(LiveWallDiagnostics.redactedPath(url.path))"
+        )
         disableInteractionIfNeeded()
         propertyEditor?.close()
         propertyEditor = nil
@@ -609,6 +641,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 overrides: preparedPropertyValues(values, for: project)
             ),
             allowsNetworkAccess: networkAccessAllowed(for: project)
+        )
+        LiveWallDiagnostics.log(
+            """
+            Selected \(project.kind.displayName) project "\(project.title)" at \
+            \(LiveWallDiagnostics.redactedPath(project.manifestURL.path))
+            """
         )
         startEnabledHostIntegrations()
         let defaults = UserDefaults.standard
@@ -773,6 +811,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         audioSpectrumCapture.stop()
         nowPlayingMonitor.stop()
         NSApp.terminate(nil)
+    }
+
+    @objc private func exportDiagnostics() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = LiveWallDiagnostics.suggestedFilename
+        panel.prompt = "Export"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try LiveWallDiagnostics.writeReport(
+                to: url,
+                details: diagnosticDetails()
+            )
+            showAlert(
+                title: "Diagnostics Exported",
+                message: "Saved \(url.lastPathComponent)."
+            )
+        } catch {
+            showAlert(
+                title: "Could Not Export Diagnostics",
+                message: error.localizedDescription
+            )
+        }
+    }
+
+    private func diagnosticDetails() -> [String: String] {
+        var details: [String: String] = [
+            "Current wallpaper": engine.currentDisplayName ?? "None",
+            "Interaction mode": String(describing: engine.interactionMode),
+            "Internet access": engine.allowsNetworkAccess ? "Allowed" : "Blocked",
+            "System audio integration": audioIntegrationEnabled ? "Enabled" : "Disabled",
+            "Media integration": mediaIntegrationEnabled ? "Enabled" : "Disabled",
+            "Pause when fullscreen": engine.options.pauseWhenFullscreen ? "Enabled" : "Disabled",
+            "Pause on battery": engine.options.pauseOnBattery ? "Enabled" : "Disabled",
+            "Displays": NSScreen.screens.map {
+                "\(Int($0.frame.width))x\(Int($0.frame.height)) @ \($0.backingScaleFactor)x"
+            }.joined(separator: ", ")
+        ]
+
+        if let project = engine.currentProject {
+            details["Wallpaper type"] = project.kind.displayName
+            details["Project manifest"] = LiveWallDiagnostics.redactedPath(
+                project.manifestURL.path
+            )
+        }
+        if let libraryScan {
+            details["Library projects"] =
+                "\(libraryScan.supportedProjects.count) supported, " +
+                "\(libraryScan.unsupportedProjects.count) unsupported, " +
+                "\(libraryScan.issues.count) invalid"
+        }
+        return details
     }
 
     // MARK: - Preferences
@@ -1000,6 +1092,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showAlert(title: String, message: String) {
+        LiveWallDiagnostics.log(
+            "Alert: \(title) — \(message.replacingOccurrences(of: "\n", with: " "))"
+        )
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message

@@ -20,7 +20,7 @@ signed but not Apple-notarized. If macOS blocks the first launch, open
 **System Settings → Privacy & Security** and choose **Open Anyway** for
 LiveWall. Look for the photo icon in the menu bar after launch.
 
-## Features (v0.6.0)
+## Features
 
 - Looping video desktop wallpaper via `AVPlayerLooper` (seamless, no gap)
 - Imports an existing Wallpaper Engine project or Workshop content folder
@@ -60,6 +60,8 @@ LiveWall. Look for the photo icon in the menu bar after launch.
     fullscreen app covers the desktop
   - **Pause on Battery** (optional)
 - Remembers your last wallpaper and settings across launches
+- Exports a privacy-conscious diagnostic report from the menu bar for
+  troubleshooting; home-directory paths are redacted
 - Native video wallpapers are muted
 
 ## Build & run
@@ -71,6 +73,8 @@ cd /Users/bsachsin/Repos/LiveWall
 ./build.sh
 open LiveWall.app
 ```
+
+`build.sh` produces a universal `arm64` + `x86_64` application by default.
 
 Look for the photo icon in the menu bar:
 
@@ -111,6 +115,14 @@ This rebuilds and verifies the app, runs the parser tests, and writes the DMG
 plus its SHA-256 checksum to `dist/`. A Developer ID certificate is required
 for a notarized public build; without one, the DMG contains the same ad-hoc
 signed app produced by `build.sh`.
+
+For a Developer ID build and notarized DMG:
+
+```bash
+LIVEWALL_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+LIVEWALL_NOTARY_PROFILE="livewall-notary" \
+./package.sh
+```
 
 ## Where to get free videos
 

@@ -490,6 +490,22 @@ struct WallpaperProjectLoaderTests {
                 "Download job cleanup did not remove its command script."
             )
 
+            let privatePath = NSHomeDirectory() + "/private/wallpaper/project.json"
+            try expect(
+                LiveWallDiagnostics.redactedPath(privatePath)
+                    == "~/private/wallpaper/project.json",
+                "Diagnostics should redact the user's home directory."
+            )
+            let diagnosticReport = LiveWallDiagnostics.makeReport(
+                details: ["Project manifest": privatePath],
+                includeLog: false
+            )
+            try expect(
+                !diagnosticReport.contains(NSHomeDirectory())
+                    && diagnosticReport.contains("~/private/wallpaper/project.json"),
+                "Diagnostic reports should not expose the user's home path."
+            )
+
             print("WallpaperProjectLoaderTests: all checks passed")
         } catch {
             fputs("WallpaperProjectLoaderTests failed: \(error)\n", stderr)

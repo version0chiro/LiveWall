@@ -1,6 +1,35 @@
 import AppKit
 
 enum SmokeTestRunner {
+    static func runDiagnostics(outputPath: String) -> Int32 {
+        do {
+            LiveWallDiagnostics.log("Diagnostics smoke test")
+            let outputURL = URL(fileURLWithPath: outputPath)
+            try LiveWallDiagnostics.writeReport(
+                to: outputURL,
+                details: ["Smoke test": "Passed"]
+            )
+            let report = try String(contentsOf: outputURL, encoding: .utf8)
+            guard report.contains("LiveWall Diagnostics"),
+                  report.contains("Smoke test: Passed"),
+                  !report.contains(NSHomeDirectory()) else {
+                fputs(
+                    "LiveWall diagnostics smoke test failed: report validation failed\n",
+                    stderr
+                )
+                return 1
+            }
+            print("LiveWall diagnostics smoke test passed: \(outputPath)")
+            return 0
+        } catch {
+            fputs(
+                "LiveWall diagnostics smoke test failed: \(error.localizedDescription)\n",
+                stderr
+            )
+            return 1
+        }
+    }
+
     static func runAudioAnalyzer() -> Int32 {
         let analyzer = SystemAudioSpectrumCapture()
         let sampleRate = 48_000.0
