@@ -2,4 +2,5 @@
 .build/
 .swiftpm/
 LiveWall.app/
+dist/
 *.dSYM/

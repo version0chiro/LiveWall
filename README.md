@@ -10,6 +10,16 @@ Website: https://version0chiro.github.io/LiveWall/
 This is an original implementation inspired by apps like Wallper — it ships no
 third-party assets or code.
 
+## Download
+
+Download the latest DMG from:
+https://github.com/version0chiro/LiveWall/releases/latest
+
+Drag LiveWall to Applications, then open it. This community build is ad-hoc
+signed but not Apple-notarized. If macOS blocks the first launch, open
+**System Settings → Privacy & Security** and choose **Open Anyway** for
+LiveWall. Look for the photo icon in the menu bar after launch.
+
 ## Features (v0.6.0)
 
 - Looping video desktop wallpaper via `AVPlayerLooper` (seamless, no gap)
@@ -90,6 +100,17 @@ LiveWall does not download, decrypt or redistribute Steam content.
 > Note: the build pins the `MacOSX15.4` SDK to match the CLT Swift 6.3.3
 > compiler. Installing full Xcode would let you use `swift build` / an `.xcodeproj`
 > instead.
+
+## Package a DMG
+
+```bash
+./package.sh
+```
+
+This rebuilds and verifies the app, runs the parser tests, and writes the DMG
+plus its SHA-256 checksum to `dist/`. A Developer ID certificate is required
+for a notarized public build; without one, the DMG contains the same ad-hoc
+signed app produced by `build.sh`.
 
 ## Where to get free videos
 
