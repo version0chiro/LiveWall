@@ -88,7 +88,7 @@ enum WallpaperProjectKind: String, CaseIterable {
     case unknown
 
     var isSupported: Bool {
-        self == .video || self == .web
+        self == .video || self == .web || self == .scene
     }
 
     var displayName: String {
@@ -232,7 +232,19 @@ struct WallpaperProjectLoader {
         let kind = projectKind(rawType: rawType, file: file)
         let title = nonEmpty(stringValue(manifest["title"]))
             ?? directoryURL.lastPathComponent
-        let entryURL = try resolveExistingAsset(file, inside: directoryURL, required: kind.isSupported)
+        let entryURL: URL?
+        if kind == .scene {
+            entryURL = try resolveScenePackage(
+                declaredFile: file,
+                inside: directoryURL
+            )
+        } else {
+            entryURL = try resolveExistingAsset(
+                file,
+                inside: directoryURL,
+                required: kind.isSupported
+            )
+        }
         let previewURL = try resolveExistingAsset(
             stringValue(manifest["preview"]),
             inside: directoryURL,
@@ -482,5 +494,35 @@ struct WallpaperProjectLoader {
             return nil
         }
         return candidate
+    }
+
+    /// Scene manifests commonly declare the internal `scene.json` entry while
+    /// Workshop downloads store that entry inside a sibling `scene.pkg`.
+    private static func resolveScenePackage(
+        declaredFile: String?,
+        inside directoryURL: URL
+    ) throws -> URL {
+        let declaredExtension = URL(
+            fileURLWithPath: declaredFile ?? ""
+        ).pathExtension.lowercased()
+        if declaredExtension == "pkg",
+           let declared = try resolveExistingAsset(
+               declaredFile,
+               inside: directoryURL,
+               required: false
+           ) {
+            return declared
+        }
+
+        guard let package = try resolveExistingAsset(
+            "scene.pkg",
+            inside: directoryURL,
+            required: false
+        ) else {
+            throw WallpaperProjectError.missingEntryFile(
+                directoryURL.appendingPathComponent("scene.pkg").path
+            )
+        }
+        return package
     }
 }

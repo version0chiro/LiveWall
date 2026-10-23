@@ -10,13 +10,15 @@ Website: https://version0chiro.github.io/LiveWall/
 This is an original implementation inspired by apps like Wallper — it ships no
 third-party assets or code.
 
-## Features (v0.5.0)
+## Features (v0.6.0)
 
 - Looping video desktop wallpaper via `AVPlayerLooper` (seamless, no gap)
 - Imports an existing Wallpaper Engine project or Workshop content folder
   - Video projects: supported
   - Web projects: supported with a lightweight compatibility shim
-  - Scene and Windows application projects: detected but not supported
+  - 2D scene projects: beta support for packaged image layers, masked
+    water-wave effects, rain particles and looping audio
+  - Windows application projects: detected but not supported on macOS
 - Downloads an individual Workshop item from a pasted Steam link using Valve's
   SteamCMD and an account that owns Wallpaper Engine
   - Password and Steam Guard entry happen directly in Terminal
@@ -98,6 +100,10 @@ Coverr (all royalty-free).
 
 - `WallpaperProject.swift` — safe `project.json` parsing and recursive library
   scanning with project-folder containment checks.
+- `SceneWallpaper.swift` — bounds-checked `scene.pkg` and `.tex` parsing,
+  embedded image loading and LZ4 effect-mask decoding.
+- `SceneWallpaperView.swift` — dependency-free Metal renderer for supported
+  2D scene effects and procedural rain.
 - `SteamWorkshop.swift` — strict Steam item-link parsing, fixed app-ID download
   jobs and safe shell quoting for interactive SteamCMD authentication.
 - `WallpaperWindow.swift` — borderless `NSWindow` hosting an `AVPlayerLayer` or
@@ -116,7 +122,8 @@ Coverr (all royalty-free).
 
 - [ ] Multi-display: different video per monitor
 - [ ] Built-in library / thumbnail picker UI (SwiftUI)
-- [ ] Scene wallpaper renderer
+- [x] 2D scene wallpaper renderer (image, water waves, rain and audio)
+- [ ] Additional scene textures, shaders, particles and puppet animation
 - [ ] Additional media players beyond Music and Spotify
 - [ ] Per-domain rather than per-wallpaper internet allowlists
 - [ ] "Pause on high CPU" throttle

@@ -16,7 +16,10 @@ swiftc \
   -target "$TARGET" \
   -o "$TEST_DIR/WallpaperProjectLoaderTests" \
   "$ROOT/Sources/LiveWall/WallpaperProject.swift" \
+  "$ROOT/Sources/LiveWall/SceneWallpaper.swift" \
   "$ROOT/Sources/LiveWall/SteamWorkshop.swift" \
-  "$ROOT/Tests/WallpaperProjectLoaderTests.swift"
+  "$ROOT/Tests/WallpaperProjectLoaderTests.swift" \
+  -framework ImageIO \
+  -framework CoreGraphics
 
 "$TEST_DIR/WallpaperProjectLoaderTests"

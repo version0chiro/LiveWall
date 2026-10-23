@@ -218,4 +218,102 @@ enum SmokeTestRunner {
             return 1
         }
     }
+
+    /// Keep a project running without the menu-bar UI for manual visual QA.
+    static func preview(manifestPath: String) -> Int32 {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.prohibited)
+
+        do {
+            let project = try WallpaperProjectLoader.load(
+                manifestURL: URL(fileURLWithPath: manifestPath)
+            )
+            guard project.isSupported else {
+                fputs(
+                    "LiveWall preview failed: unsupported \(project.kind.displayName) project\n",
+                    stderr
+                )
+                return 1
+            }
+
+            let engine = WallpaperEngine()
+            engine.onContentReady = { result in
+                switch result {
+                case .success:
+                    print(
+                        "LiveWall preview ready: \(project.title) [\(project.kind.displayName)]"
+                    )
+                case .failure(let error):
+                    fputs(
+                        "LiveWall preview failed: \(error.localizedDescription)\n",
+                        stderr
+                    )
+                    app.terminate(nil)
+                }
+            }
+            try engine.setWallpaper(project: project)
+            app.run()
+            withExtendedLifetime(engine) {}
+            return 0
+        } catch {
+            fputs("LiveWall preview failed: \(error.localizedDescription)\n", stderr)
+            return 1
+        }
+    }
+
+    static func snapshotScene(
+        manifestPath: String,
+        outputPath: String
+    ) -> Int32 {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.prohibited)
+
+        do {
+            let project = try WallpaperProjectLoader.load(
+                manifestURL: URL(fileURLWithPath: manifestPath)
+            )
+            guard project.kind == .scene, project.isSupported else {
+                fputs("LiveWall snapshot failed: project is not a supported scene\n", stderr)
+                return 1
+            }
+
+            let engine = WallpaperEngine()
+            var exitCode: Int32 = 1
+            engine.onContentReady = { result in
+                switch result {
+                case .success:
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        engine.captureSceneSnapshot(
+                            to: URL(fileURLWithPath: outputPath)
+                        ) { snapshotResult in
+                            switch snapshotResult {
+                            case .success:
+                                print("LiveWall scene snapshot written: \(outputPath)")
+                                exitCode = 0
+                            case .failure(let error):
+                                fputs(
+                                    "LiveWall snapshot failed: \(error.localizedDescription)\n",
+                                    stderr
+                                )
+                            }
+                            app.terminate(nil)
+                        }
+                    }
+                case .failure(let error):
+                    fputs(
+                        "LiveWall snapshot failed: \(error.localizedDescription)\n",
+                        stderr
+                    )
+                    app.terminate(nil)
+                }
+            }
+            try engine.setWallpaper(project: project)
+            app.run()
+            withExtendedLifetime(engine) {}
+            return exitCode
+        } catch {
+            fputs("LiveWall snapshot failed: \(error.localizedDescription)\n", stderr)
+            return 1
+        }
+    }
 }

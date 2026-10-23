@@ -16,6 +16,7 @@ final class WallpaperWindow: NSWindow {
 
     private var playerView: PlayerLayerView?
     private var webView: WebWallpaperView?
+    private var sceneView: SceneWallpaperView?
     private var videoGravity: AVLayerVideoGravity = .resizeAspectFill
     private(set) var isInteractionEnabled = false
 
@@ -80,6 +81,25 @@ final class WallpaperWindow: NSWindow {
         self.webView = webView
     }
 
+    func loadSceneWallpaper(
+        scene: SceneWallpaper,
+        onLoad: ((Result<Void, Error>) -> Void)? = nil
+    ) {
+        do {
+            let sceneView = try SceneWallpaperView(
+                frame: contentLayoutRect,
+                scene: scene
+            )
+            installContentView(sceneView)
+            self.sceneView = sceneView
+            DispatchQueue.main.async {
+                onLoad?(.success(()))
+            }
+        } catch {
+            onLoad?(.failure(error))
+        }
+    }
+
     func setVideoGravity(_ gravity: AVLayerVideoGravity) {
         videoGravity = gravity
         playerView?.playerLayer.videoGravity = gravity
@@ -87,6 +107,18 @@ final class WallpaperWindow: NSWindow {
 
     func setPaused(_ paused: Bool) {
         webView?.setPaused(paused)
+        sceneView?.setPaused(paused)
+    }
+
+    func captureSceneSnapshot(
+        to url: URL,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        guard let sceneView else {
+            completion(.failure(WallpaperWindowError.noSceneWallpaper))
+            return
+        }
+        sceneView.captureNextFrame(to: url, completion: completion)
     }
 
     func applyUserProperties(json: String) {
@@ -145,6 +177,7 @@ final class WallpaperWindow: NSWindow {
     private func installContentView(_ view: NSView) {
         playerView = nil
         webView = nil
+        sceneView = nil
         view.autoresizingMask = [.width, .height]
         view.frame = NSRect(origin: .zero, size: frame.size)
         contentView = view
@@ -616,6 +649,17 @@ private enum WebWallpaperError: LocalizedError {
             return "WebKit could not initialize the remote-resource blocking rules."
         case .compatibilityProbeFailed:
             return "The web wallpaper host compatibility probe failed."
+        }
+    }
+}
+
+private enum WallpaperWindowError: LocalizedError {
+    case noSceneWallpaper
+
+    var errorDescription: String? {
+        switch self {
+        case .noSceneWallpaper:
+            return "No scene wallpaper is available."
         }
     }
 }

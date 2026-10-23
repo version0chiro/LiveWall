@@ -32,7 +32,11 @@ swiftc \
   -framework ScreenCaptureKit \
   -framework Accelerate \
   -framework AudioToolbox \
-  -framework CoreMedia
+  -framework CoreMedia \
+  -framework CoreImage \
+  -framework ImageIO \
+  -framework Metal \
+  -framework MetalKit
 
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -42,8 +46,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleName</key>            <string>LiveWall</string>
     <key>CFBundleDisplayName</key>     <string>LiveWall</string>
     <key>CFBundleIdentifier</key>      <string>com.livewall.app</string>
-    <key>CFBundleVersion</key>         <string>3</string>
-    <key>CFBundleShortVersionString</key><string>0.5.0</string>
+    <key>CFBundleVersion</key>         <string>4</string>
+    <key>CFBundleShortVersionString</key><string>0.6.0</string>
     <key>CFBundleExecutable</key>      <string>LiveWall</string>
     <key>CFBundlePackageType</key>     <string>APPL</string>
     <key>LSMinimumSystemVersion</key>  <string>14.0</string>

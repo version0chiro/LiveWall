@@ -27,6 +27,17 @@ if CommandLine.arguments.count == 2,
     exit(SmokeTestRunner.runPropertyEditor(
         manifestPath: CommandLine.arguments[2]
     ))
+} else if CommandLine.arguments.count == 3,
+          CommandLine.arguments[1] == "--preview-project" {
+    exit(SmokeTestRunner.preview(
+        manifestPath: CommandLine.arguments[2]
+    ))
+} else if CommandLine.arguments.count == 4,
+          CommandLine.arguments[1] == "--snapshot-scene" {
+    exit(SmokeTestRunner.snapshotScene(
+        manifestPath: CommandLine.arguments[2],
+        outputPath: CommandLine.arguments[3]
+    ))
 } else {
     let app = NSApplication.shared
     let delegate = AppDelegate()

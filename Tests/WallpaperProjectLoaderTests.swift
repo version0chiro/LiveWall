@@ -28,6 +28,64 @@ func writeJSON(_ object: [String: Any], to url: URL) throws {
     try data.write(to: url)
 }
 
+func makeScenePackage(entries: [(String, Data)]) -> Data {
+    var data = Data()
+    func appendUInt32(_ value: UInt32) {
+        var littleEndian = value.littleEndian
+        withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+    }
+
+    let version = Data("PKGV0018".utf8)
+    appendUInt32(UInt32(version.count))
+    data.append(version)
+    appendUInt32(UInt32(entries.count))
+
+    var offset: UInt32 = 0
+    for (name, contents) in entries {
+        let path = Data(name.utf8)
+        appendUInt32(UInt32(path.count))
+        data.append(path)
+        appendUInt32(offset)
+        appendUInt32(UInt32(contents.count))
+        offset += UInt32(contents.count)
+    }
+    for (_, contents) in entries {
+        data.append(contents)
+    }
+    return data
+}
+
+func makeEmbeddedImageTexture(_ image: Data) -> Data {
+    var data = Data()
+    func appendUInt32(_ value: UInt32) {
+        var littleEndian = value.littleEndian
+        withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+    }
+    func appendZeros(_ count: Int) {
+        data.append(Data(repeating: 0, count: count))
+    }
+
+    data.append(Data("TEXV0005".utf8))
+    appendZeros(1)
+    data.append(Data("TEXI0001".utf8))
+    appendZeros(1)
+    appendUInt32(0)
+    appendZeros(4)
+    appendUInt32(1)
+    appendUInt32(1)
+    appendZeros(12)
+    data.append(Data("TEXB0003".utf8))
+    appendZeros(1)
+    appendUInt32(1)
+    appendZeros(8)
+    appendZeros(8)
+    appendUInt32(0)
+    appendUInt32(0)
+    appendUInt32(UInt32(image.count))
+    data.append(image)
+    return data
+}
+
 @main
 struct WallpaperProjectLoaderTests {
     static func main() {
@@ -162,10 +220,32 @@ struct WallpaperProjectLoaderTests {
             try makeDirectory(sceneProjectURL)
             try Data().write(to: sceneProjectURL.appendingPathComponent("scene.pkg"))
             try writeJSON([
-                "title": "Unsupported Scene",
-                "type": "scene",
-                "file": "scene.pkg"
+                "title": "Supported Scene",
+                "type": "Scene",
+                "file": "scene.json"
             ], to: sceneProjectURL.appendingPathComponent("project.json"))
+
+            let scene = try WallpaperProjectLoader.load(
+                manifestURL: sceneProjectURL.appendingPathComponent("project.json")
+            )
+            try expect(scene.kind == .scene, "Scene project type was not parsed.")
+            try expect(
+                scene.entryURL == sceneProjectURL.appendingPathComponent("scene.pkg"),
+                "Scene package fallback was not resolved."
+            )
+            try expect(scene.isSupported, "Scene project should be supported.")
+
+            let applicationProjectURL = temporaryRoot
+                .appendingPathComponent("application-project")
+            try makeDirectory(applicationProjectURL)
+            try Data().write(
+                to: applicationProjectURL.appendingPathComponent("wallpaper.exe")
+            )
+            try writeJSON([
+                "title": "Unsupported Application",
+                "type": "application",
+                "file": "wallpaper.exe"
+            ], to: applicationProjectURL.appendingPathComponent("project.json"))
 
             let malformedProjectURL = temporaryRoot.appendingPathComponent("malformed")
             try makeDirectory(malformedProjectURL)
@@ -174,16 +254,61 @@ struct WallpaperProjectLoaderTests {
             )
 
             let scan = WallpaperProjectLoader.scan(rootURL: temporaryRoot)
-            try expect(scan.projects.count == 3, "Scanner should return three valid manifests.")
+            try expect(scan.projects.count == 4, "Scanner should return four valid manifests.")
             try expect(
-                scan.supportedProjects.map(\.title) == ["Local Web", "Ocean Video"],
+                scan.supportedProjects.map(\.title)
+                    == ["Local Web", "Ocean Video", "Supported Scene"],
                 "Scanner did not sort or classify compatible projects correctly."
             )
             try expect(
-                scan.unsupportedProjects.map(\.title) == ["Unsupported Scene"],
-                "Scene project should be retained as unsupported."
+                scan.unsupportedProjects.map(\.title) == ["Unsupported Application"],
+                "Application project should be retained as unsupported."
             )
             try expect(scan.issues.count == 1, "Malformed manifest should be reported once.")
+
+            let packageURL = temporaryRoot.appendingPathComponent("format-test.pkg")
+            let packageData = makeScenePackage(entries: [
+                ("scene.json", Data("{\"version\":1}".utf8)),
+                ("materials/test.bin", Data([1, 2, 3, 4]))
+            ])
+            try packageData.write(to: packageURL)
+            let archive = try ScenePackageArchive(url: packageURL)
+            try expect(archive.version == "PKGV0018", "Scene package version was not read.")
+            try expect(
+                archive.names == ["scene.json", "materials/test.bin"],
+                "Scene package index was not preserved."
+            )
+            let testAsset = try archive.data(named: "materials/test.bin")
+            try expect(
+                testAsset == Data([1, 2, 3, 4]),
+                "Scene package payload was not read from its indexed offset."
+            )
+
+            let unsafePackageURL = temporaryRoot
+                .appendingPathComponent("unsafe-format-test.pkg")
+            try makeScenePackage(entries: [
+                ("../outside", Data([1]))
+            ]).write(to: unsafePackageURL)
+            do {
+                _ = try ScenePackageArchive(url: unsafePackageURL)
+                throw TestFailure.assertion(
+                    "Scene package traversal path should be rejected."
+                )
+            } catch SceneWallpaperError.invalidPackage {
+                // Expected.
+            }
+
+            let onePixelPNG = Data(base64Encoded:
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+            )!
+            let texture = try SceneTexture(
+                data: makeEmbeddedImageTexture(onePixelPNG)
+            )
+            let decodedImage = try texture.makeImage()
+            try expect(
+                decodedImage.width == 1 && decodedImage.height == 1,
+                "Embedded scene texture image was not decoded."
+            )
 
             let escapedProjectURL = temporaryRoot.appendingPathComponent("escaped")
             try makeDirectory(escapedProjectURL)

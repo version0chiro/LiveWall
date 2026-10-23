@@ -287,7 +287,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !unsupported.isEmpty {
             submenu.addItem(.separator())
             let summary = NSMenuItem(
-                title: "\(unsupported.count) unsupported scene/application projects",
+                title: "\(unsupported.count) unsupported application/unknown projects",
                 action: nil,
                 keyEquivalent: ""
             )
@@ -437,7 +437,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if scan.supportedProjects.isEmpty {
             var details = """
             No compatible projects were found. LiveWall currently supports \
-            Wallpaper Engine video and web projects.
+            Wallpaper Engine video, web and compatible 2D scene projects.
             """
             if let firstIssue = scan.issues.first {
                 details += "\n\nFirst skipped item: \(firstIssue.message)"
@@ -546,7 +546,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     title: "Wallpaper Downloaded but Unsupported",
                     message: """
                     \(project.title) is a \(project.kind.displayName) wallpaper. \
-                    LiveWall currently plays video and web projects only.
+                    LiveWall currently plays video, web and compatible 2D scene \
+                    projects.
                     """
                 )
             }
@@ -597,6 +598,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         disableInteractionIfNeeded()
         propertyEditor?.close()
         propertyEditor = nil
+        if project.kind != .web {
+            audioSpectrumCapture.stop()
+            nowPlayingMonitor.stop()
+        }
         let values = propertyValues(for: project)
         try engine.setWallpaper(
             project: project,

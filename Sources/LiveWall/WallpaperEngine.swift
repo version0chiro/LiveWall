@@ -22,10 +22,12 @@ final class WallpaperEngine {
     private var windows: [WallpaperWindow] = []
     private var players: [AVQueuePlayer] = []
     private var loopers: [AVPlayerLooper] = []
+    private var sceneAudioPlayer: AVAudioPlayer?
 
     private enum Content {
         case video(URL)
         case web(entryURL: URL, projectDirectoryURL: URL)
+        case scene(SceneWallpaper)
     }
 
     private var content: Content?
@@ -102,7 +104,9 @@ final class WallpaperEngine {
                 entryURL: entryURL,
                 projectDirectoryURL: project.directoryURL
             )
-        case .scene, .application, .unknown:
+        case .scene:
+            content = .scene(try SceneWallpaper.load(project: project))
+        case .application, .unknown:
             throw WallpaperProjectError.invalidManifest(
                 "\(project.kind.displayName) wallpapers are not supported yet"
             )
@@ -178,6 +182,17 @@ final class WallpaperEngine {
         window.verifyWebHostCompatibility(completion: completion)
     }
 
+    func captureSceneSnapshot(
+        to url: URL,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        guard let window = windows.first else {
+            completion(.failure(WallpaperEngineError.noWallpaperWindow))
+            return
+        }
+        window.captureSceneSnapshot(to: url, completion: completion)
+    }
+
     private func applyInteractionState() {
         windows.forEach {
             $0.setInteractionEnabled(isInteractionEnabled)
@@ -247,6 +262,20 @@ final class WallpaperEngine {
                     allowsNetworkAccess: allowsNetworkAccess,
                     onLoad: readinessCallback
                 )
+            case .scene(let scene):
+                let readinessCallback: ((Result<Void, Error>) -> Void)?
+                if hasAssignedReadinessCallback {
+                    readinessCallback = nil
+                } else {
+                    hasAssignedReadinessCallback = true
+                    readinessCallback = { [weak self] result in
+                        self?.onContentReady?(result)
+                    }
+                }
+                window.loadSceneWallpaper(
+                    scene: scene,
+                    onLoad: readinessCallback
+                )
             }
 
             window.setInteractionEnabled(isInteractionEnabled)
@@ -256,11 +285,29 @@ final class WallpaperEngine {
             windows.append(window)
         }
 
+        if case .scene(let scene) = content,
+           let audio = scene.audioTrack {
+            do {
+                let player = try AVAudioPlayer(data: audio.data)
+                player.numberOfLoops = audio.loops ? -1 : 0
+                player.volume = audio.volume
+                player.prepareToPlay()
+                sceneAudioPlayer = player
+            } catch {
+                fputs(
+                    "LiveWall scene audio unavailable: \(error.localizedDescription)\n",
+                    stderr
+                )
+            }
+        }
+
         applyPolicy()
     }
 
     private func teardown() {
         players.forEach { $0.pause() }
+        sceneAudioPlayer?.stop()
+        sceneAudioPlayer = nil
         windows.forEach { $0.orderOut(nil) }
         windows.removeAll()
         players.removeAll()
@@ -284,9 +331,11 @@ final class WallpaperEngine {
         let shouldPause = manuallyPaused || shouldStayPaused()
         if shouldPause {
             players.forEach { $0.pause() }
+            sceneAudioPlayer?.pause()
             windows.forEach { $0.setPaused(true) }
         } else {
             players.forEach { $0.play() }
+            sceneAudioPlayer?.play()
             windows.forEach { $0.setPaused(false) }
         }
     }
